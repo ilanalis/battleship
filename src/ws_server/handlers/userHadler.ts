@@ -1,6 +1,5 @@
 import { CommandTypes } from "..";
 import { User, UserDataBase } from "../../db/userDB";
-import { randomBytes, pbkdf2Sync } from "crypto";
 
 interface UserCredentials {
   name: string;

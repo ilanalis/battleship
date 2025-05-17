@@ -3,6 +3,7 @@ import { handleUserRegistration } from "./handlers/userHadler";
 import { UserDataBase } from "../db/userDB";
 import { handleCreatingRoom } from "./handlers/gameRoomHandler";
 import { RoomDataBase } from "../db/roomDB";
+import { HandleSendingRoomsList } from "./handlers/ responseForAll";
 
 const WS_PORT = 3000;
 
@@ -39,6 +40,20 @@ wss.on("connection", function connection(ws: WebSocket) {
           socket.player = { index, name };
         }
         socket.send(JSON.stringify(response));
+        const availableRoomsMessage = HandleSendingRoomsList(
+          roomDB.availableRooms
+        );
+        socket.send(JSON.stringify(availableRoomsMessage));
+
+        break;
+      }
+
+      case CommandTypes.CREATE_ROOM: {
+        if (socket.player) {
+          handleCreatingRoom(roomDB, socket.player);
+          const response = HandleSendingRoomsList(roomDB.availableRooms);
+          socket.send(JSON.stringify(response));
+        }
         break;
       }
     }
