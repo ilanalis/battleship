@@ -9,21 +9,24 @@ import { createDataBase } from "../db/createDB";
 
 const WS_PORT = 3000;
 
+const { userTable, roomTable } = createDataBase();
+
 export enum CommandTypes {
   REGISTRATION = "reg",
   CREATE_ROOM = "create_room",
   UPDATE_ROOM = "update_room",
+  ADD_USER_TO_ROOM = "add_user_to_room",
 }
-
-const { userTable, roomTable } = createDataBase();
-
-const wss = new WebSocketServer({ port: WS_PORT });
 type ExtendedWebSocket = WebSocket & {
   player?: { name: string; index: string };
 };
+let clients: ExtendedWebSocket[] = [];
+
+const wss = new WebSocketServer({ port: WS_PORT });
 
 wss.on("connection", function connection(ws: WebSocket) {
   const socket = ws as ExtendedWebSocket;
+  clients.push(socket);
   console.log(`WebSocket server on the ${WS_PORT} port!`);
 
   socket.on("error", console.error);
@@ -51,8 +54,7 @@ wss.on("connection", function connection(ws: WebSocket) {
       case CommandTypes.CREATE_ROOM: {
         if (socket.player) {
           handleCreatingRoom(roomTable);
-          const response = HandleSendingRoomsList(getAvailableRooms(roomTable));
-          socket.send(JSON.stringify(response));
+          broadcastUpdateRooms();
         }
         break;
       }
@@ -78,3 +80,13 @@ function shutdown() {
 }
 
 process.on("SIGINT", shutdown);
+
+function broadcastUpdateRooms() {
+  const message = HandleSendingRoomsList(getAvailableRooms(roomTable));
+
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(message));
+    }
+  });
+}
