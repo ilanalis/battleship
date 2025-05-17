@@ -7,7 +7,7 @@ export interface User {
   isUserLoggedIn: boolean;
 }
 
-export class UserDataBase {
+export class UserTable {
   users: { [key: string]: User } = {};
 
   getUser(name: string): User | undefined {

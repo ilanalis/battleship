@@ -1,5 +1,5 @@
 import { CommandTypes } from "..";
-import { User, UserDataBase } from "../../db/userDB";
+import { User, UserTable } from "../../db/userTable";
 
 interface UserCredentials {
   name: string;
@@ -23,11 +23,11 @@ const USER_IS_ALREADY_LOGGED_IN_ERROR = "User is already logged in";
 
 export const handleUserRegistration = (
   userData: UserCredentials,
-  db: UserDataBase
+  userTable: UserTable
 ): { response: RegistrationResponse; index?: string; name?: string } => {
-  const user = db.getUser(userData.name);
+  const user = userTable.getUser(userData.name);
   if (!user) {
-    const newUser = db.createUser(userData);
+    const newUser = userTable.createUser(userData);
 
     return {
       response: createResponse(newUser),

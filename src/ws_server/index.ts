@@ -1,9 +1,11 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { handleUserRegistration } from "./handlers/userHadler";
-import { UserDataBase } from "../db/userDB";
-import { handleCreatingRoom } from "./handlers/gameRoomHandler";
-import { RoomDataBase } from "../db/roomDB";
+import {
+  getAvailableRooms,
+  handleCreatingRoom,
+} from "./handlers/gameRoomHandler";
 import { HandleSendingRoomsList } from "./handlers/ responseForAll";
+import { createDataBase } from "../db/createDB";
 
 const WS_PORT = 3000;
 
@@ -13,10 +15,9 @@ export enum CommandTypes {
   UPDATE_ROOM = "update_room",
 }
 
-const wss = new WebSocketServer({ port: WS_PORT });
-const userDB = new UserDataBase();
-const roomDB = new RoomDataBase();
+const { userTable, roomTable } = createDataBase();
 
+const wss = new WebSocketServer({ port: WS_PORT });
 type ExtendedWebSocket = WebSocket & {
   player?: { name: string; index: string };
 };
@@ -28,20 +29,19 @@ wss.on("connection", function connection(ws: WebSocket) {
   socket.on("error", console.error);
 
   socket.on("message", function message(data) {
-    console.log("message", socket.player);
     const parsed = JSON.parse(data.toString());
     switch (parsed.type) {
       case CommandTypes.REGISTRATION: {
         const { response, index, name } = handleUserRegistration(
           JSON.parse(parsed.data),
-          userDB
+          userTable
         );
         if (index && name) {
           socket.player = { index, name };
         }
         socket.send(JSON.stringify(response));
         const availableRoomsMessage = HandleSendingRoomsList(
-          roomDB.availableRooms
+          getAvailableRooms(roomTable)
         );
         socket.send(JSON.stringify(availableRoomsMessage));
 
@@ -50,8 +50,8 @@ wss.on("connection", function connection(ws: WebSocket) {
 
       case CommandTypes.CREATE_ROOM: {
         if (socket.player) {
-          handleCreatingRoom(roomDB, socket.player);
-          const response = HandleSendingRoomsList(roomDB.availableRooms);
+          handleCreatingRoom(roomTable);
+          const response = HandleSendingRoomsList(getAvailableRooms(roomTable));
           socket.send(JSON.stringify(response));
         }
         break;
@@ -59,7 +59,8 @@ wss.on("connection", function connection(ws: WebSocket) {
     }
   });
   socket.on("close", function close() {
-    if (socket.player) userDB.users[socket.player.name].isUserLoggedIn = false;
+    if (socket.player)
+      userTable.users[socket.player.name].isUserLoggedIn = false;
   });
 });
 

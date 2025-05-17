@@ -1,8 +1,9 @@
-import { RoomDataBase } from "../../db/roomDB";
+import { RoomTable } from "../../db/roomTable";
 
-export const handleCreatingRoom = (
-  db: RoomDataBase,
-  player: { name: string; index: string }
-): void => {
-  db.createRoom([player]);
+export const handleCreatingRoom = (roomTable: RoomTable): void => {
+  roomTable.createRoom();
+};
+
+export const getAvailableRooms = (roomTable: RoomTable) => {
+  return Object.values(roomTable.availableRooms);
 };

@@ -1,5 +1,5 @@
 import { CommandTypes } from "..";
-import { Room } from "../../db/roomDB";
+import { Room } from "../../db/roomTable";
 
 interface SendRoomsResponse {
   type: CommandTypes.UPDATE_ROOM;
