@@ -1,16 +1,15 @@
 import { generateUUID } from "../utils/generateUUID";
-import { User } from "./userTable";
 
 const MAX_COUNT_OF_PLAYERS = 2;
 
-interface roomUser {
+export interface RoomUser {
   name: string;
   index: string;
 }
 
 export interface Room {
   roomId: string;
-  roomUsers: roomUser[];
+  roomUsers: RoomUser[];
 }
 
 export class RoomTable {
@@ -24,16 +23,20 @@ export class RoomTable {
   createRoom(): Room {
     const roomId = generateUUID();
     const newRoom = { roomId, roomUsers: [] };
-    this.rooms[roomId] = newRoom;
-    this.availableRooms[roomId] = newRoom;
+    this.rooms[roomId] = { ...newRoom, roomUsers: [] };
+    this.availableRooms[roomId] = { ...newRoom, roomUsers: [] };
     return newRoom;
   }
 
-  addUserToRoom(roomId: string, user: roomUser) {
-    this.rooms[roomId].roomUsers.push(user);
-    const currentRoomUsers = this.availableRooms[roomId].roomUsers;
-    currentRoomUsers.push(user);
-    if (currentRoomUsers.length === 2) {
+  addUserToRoom(roomId: string, user: RoomUser) {
+    const room = this.rooms[roomId];
+    if (room.roomUsers[0]?.index === user.index) return;
+    if (room.roomUsers.length < MAX_COUNT_OF_PLAYERS) {
+      room.roomUsers.push(user);
+    }
+    const availableRoom = this.availableRooms[roomId];
+    availableRoom.roomUsers.push(user);
+    if (availableRoom.roomUsers.length === MAX_COUNT_OF_PLAYERS) {
       delete this.availableRooms[roomId];
     }
   }

@@ -2,6 +2,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { handleUserRegistration } from "./handlers/userHadler";
 import {
   getAvailableRooms,
+  handleAddingUserToRoom,
   handleCreatingRoom,
 } from "./handlers/gameRoomHandler";
 import { HandleSendingRoomsList } from "./handlers/ responseForAll";
@@ -52,8 +53,15 @@ wss.on("connection", function connection(ws: WebSocket) {
       }
 
       case CommandTypes.CREATE_ROOM: {
+        handleCreatingRoom(roomTable);
+        broadcastUpdateRooms();
+        break;
+      }
+
+      case CommandTypes.ADD_USER_TO_ROOM: {
+        const indexRoom = JSON.parse(parsed.data.toString()).indexRoom;
         if (socket.player) {
-          handleCreatingRoom(roomTable);
+          handleAddingUserToRoom(roomTable, indexRoom, socket.player);
           broadcastUpdateRooms();
         }
         break;
