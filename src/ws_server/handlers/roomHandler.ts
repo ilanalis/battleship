@@ -19,9 +19,20 @@ export const tryAddUserToRoom = (
   if (room.roomUsers.length < MAX_COUNT_OF_PLAYERS) {
     const wasUserAdded = roomTable.addUserToRoom(roomId, user);
     if (room.roomUsers.length === MAX_COUNT_OF_PLAYERS) {
+      const usersRooms = [
+        ...roomTable.findRoomsByUser(
+          roomTable.availableRooms[roomId].roomUsers[0]
+        ),
+        ...roomTable.findRoomsByUser(
+          roomTable.availableRooms[roomId].roomUsers[1]
+        ),
+      ];
+      usersRooms.forEach((room) => {
+        roomTable.removeRoomFromAvailableList(room.roomId);
+      });
+
       roomTable.removeRoomFromAvailableList(roomId);
       console.log(`user ${user.name} was added to room with id:${roomId}`);
-
       return true;
     }
     if (wasUserAdded) {

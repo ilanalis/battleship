@@ -34,7 +34,14 @@ export class RoomTable {
     }
     return false;
   }
+
   removeRoomFromAvailableList(roomId: string) {
     delete this.availableRooms[roomId];
+  }
+
+  findRoomsByUser(roomUser: RoomUser): Room[] {
+    return Object.values(this.availableRooms).filter((room) =>
+      room.roomUsers.some((user) => user.index === roomUser.index)
+    );
   }
 }

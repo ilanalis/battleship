@@ -4,7 +4,7 @@ import {
   getAvailableRooms,
   handleCreatingRoom,
   tryAddUserToRoom,
-} from "./handlers/gameRoomHandler";
+} from "./handlers/roomHandler";
 import { HandleSendingRoomsList } from "./handlers/ responseForAll";
 import { createDataBase } from "../db/createDB";
 
@@ -53,8 +53,10 @@ wss.on("connection", function connection(ws: WebSocket) {
       }
 
       case CommandTypes.CREATE_ROOM: {
-        handleCreatingRoom(roomTable);
-        broadcastUpdateRooms();
+        if (socket.player?.index) {
+          handleCreatingRoom(roomTable);
+          broadcastUpdateRooms();
+        }
         break;
       }
 
