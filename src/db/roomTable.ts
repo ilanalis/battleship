@@ -1,7 +1,5 @@
 import { generateUUID } from "../utils/generateUUID";
 
-const MAX_COUNT_OF_PLAYERS = 2;
-
 export interface RoomUser {
   name: string;
   index: string;
@@ -23,21 +21,20 @@ export class RoomTable {
   createRoom(): Room {
     const roomId = generateUUID();
     const newRoom = { roomId, roomUsers: [] };
-    this.rooms[roomId] = { ...newRoom, roomUsers: [] };
-    this.availableRooms[roomId] = { ...newRoom, roomUsers: [] };
+    this.rooms[roomId] = newRoom;
+    this.availableRooms[roomId] = newRoom;
     return newRoom;
   }
 
-  addUserToRoom(roomId: string, user: RoomUser) {
+  addUserToRoom(roomId: string, user: RoomUser): boolean {
     const room = this.rooms[roomId];
-    if (room.roomUsers[0]?.index === user.index) return;
-    if (room.roomUsers.length < MAX_COUNT_OF_PLAYERS) {
+    if (!room.roomUsers.some((u) => u.index === user.index)) {
       room.roomUsers.push(user);
+      return true;
     }
-    const availableRoom = this.availableRooms[roomId];
-    availableRoom.roomUsers.push(user);
-    if (availableRoom.roomUsers.length === MAX_COUNT_OF_PLAYERS) {
-      delete this.availableRooms[roomId];
-    }
+    return false;
+  }
+  removeRoomFromAvailableList(roomId: string) {
+    delete this.availableRooms[roomId];
   }
 }
