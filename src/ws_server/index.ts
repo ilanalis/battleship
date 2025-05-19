@@ -7,16 +7,18 @@ import {
 } from "./handlers/roomHandler";
 import { HandleSendingRoomsList } from "./handlers/ responseForAll";
 import { createDataBase } from "../db/createDB";
+import { handleCreatingGame } from "./handlers/gameHandler";
 
 const WS_PORT = 3000;
 
-const { userTable, roomTable } = createDataBase();
+const { userTable, roomTable, gameTable } = createDataBase();
 
 export enum CommandTypes {
   REGISTRATION = "reg",
   CREATE_ROOM = "create_room",
   UPDATE_ROOM = "update_room",
   ADD_USER_TO_ROOM = "add_user_to_room",
+  CREATE_GAME = "create_game",
 }
 type ExtendedWebSocket = WebSocket & {
   player?: { name: string; index: string };
@@ -63,14 +65,15 @@ wss.on("connection", function connection(ws: WebSocket) {
       case CommandTypes.ADD_USER_TO_ROOM: {
         const indexRoom = JSON.parse(parsed.data.toString()).indexRoom;
         if (socket.player) {
-          const isRoomFull = tryAddUserToRoom(
+          const { isRoomFull, playerIds } = tryAddUserToRoom(
             roomTable,
             indexRoom,
             socket.player
           );
           broadcastUpdateRooms();
           if (isRoomFull) {
-            ///create game
+            const responses = handleCreatingGame(gameTable, playerIds);
+            sendStartGameToPlayers(playerIds);
           }
         }
         break;
@@ -97,6 +100,21 @@ function shutdown() {
 }
 
 process.on("SIGINT", shutdown);
+
+function sendStartGameToPlayers(playerIds: string[]) {
+  const activePlayersClients = playerIds.map((playerId) => {
+    return clients.find((client) => {
+      return client.player?.index === playerId;
+    });
+  });
+
+  activePlayersClients.forEach((client) => {
+    const response = handleCreatingGame(gameTable, playerIds);
+    if (client?.readyState === WebSocket.OPEN && client.player) {
+      client.send(JSON.stringify(response[client.player.index]));
+    }
+  });
+}
 
 function broadcastUpdateRooms() {
   const message = HandleSendingRoomsList(getAvailableRooms(roomTable));
